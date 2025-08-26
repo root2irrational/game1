@@ -9,13 +9,14 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 public class App {
-
+    public static final int WIDTH = 500;
+    public static final int HEIGHT = 500;
     private static void initWindow() {
         // create a window frame and set the title in the toolbar
         JFrame window = new JFrame("Catch the slaves");
         // when we close the window, stop the app
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window.setSize(1000, 1000);
+        window.setSize(WIDTH, HEIGHT);
         // create the jpanel to draw on.
         // this also initializes the game loop
         Maze maze = new Maze();
