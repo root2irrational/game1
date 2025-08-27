@@ -12,12 +12,17 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.JPanel;
 
 public class Maze extends JPanel implements ActionListener, KeyListener {
 	private boolean[][] mazeGrid;
     private int tileSize = 10; // size of each tile in pixels
     Point start, exit;
+    // Music player
+
 	public Maze() {
         // set the game board size
         // setPreferredSize(new Dimension(TILE_SIZE * COLUMNS, TILE_SIZE * ROWS));
@@ -26,7 +31,19 @@ public class Maze extends JPanel implements ActionListener, KeyListener {
         String filePath = "/images/maze2.png";
         loadMaze(filePath);
         setPreferredSize(new Dimension(mazeGrid[0].length * tileSize, mazeGrid.length * tileSize));
-
+        String musicPath = "/music/zhitanNHH.wav";
+        playMusic(musicPath);
+    }
+    private void playMusic(String path) {
+        try {
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(getClass().getResource(path));
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioStream);
+            clip.start();        // start playing
+            clip.loop(Clip.LOOP_CONTINUOUSLY); // loop in background
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void loadMaze(String imagePath) {
