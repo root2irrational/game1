@@ -12,6 +12,7 @@ import javax.swing.SwingUtilities;
 public class App {
     public static final int WIDTH = 1000;
     public static final int HEIGHT = 1000;
+    private int tick = 0;
     private static void initWindow() {
         // create a window frame and set the title in the toolbar
         JFrame window = new JFrame("Catch the slaves");

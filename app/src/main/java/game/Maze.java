@@ -19,21 +19,32 @@ import javax.swing.JPanel;
 
 public class Maze extends JPanel implements ActionListener, KeyListener {
 	private boolean[][] mazeGrid;
-    private int tileSize = 10; // size of each tile in pixels
+    public static final int tileSize = 1; // size of each tile in pixels
+    public static final int scaleFactor = 50;
+    public static final int drawSize = scaleFactor * tileSize;
     Point start, exit;
-    // Music player
+    private Player player;
+
+    private int viewCols = 15; // how many columns to show on screen
+    private int viewRows = 15; // how many rows to show
+
 
 	public Maze() {
         // set the game board size
         // setPreferredSize(new Dimension(TILE_SIZE * COLUMNS, TILE_SIZE * ROWS));
         // set the game board background color
         // setBackground(new Color(0, 0, 0));
-        String filePath = "/images/maze2.png";
+        String filePath = "/images/maze3.png";
         loadMaze(filePath);
-        setPreferredSize(new Dimension(mazeGrid[0].length * tileSize, mazeGrid.length * tileSize));
+        // setPreferredSize(new Dimension(mazeGrid[0].length * drawSize, mazeGrid.length * drawSize));
+        setPreferredSize(new Dimension(viewCols * drawSize,
+                               viewRows * drawSize));
         String musicPath = "/music/zhitanNHH.wav";
         playMusic(musicPath);
+        // Create the player at the start
+        player = new Player(1, start.x, start.y); // speed=1 means move 1 tile at a time
     }
+
     private void playMusic(String path) {
         try {
             AudioInputStream audioStream = AudioSystem.getAudioInputStream(getClass().getResource(path));
@@ -98,15 +109,7 @@ public class Maze extends JPanel implements ActionListener, KeyListener {
     public void actionPerformed(ActionEvent e) {
 		
 	}
-
-	@Override
-    public void paintComponent(Graphics g) {
-		super.paintComponent(g); // Call superclass method for proper painting
-        // Drawing logic for your map goes here
-       super.paintComponent(g);
-
-        if (mazeGrid == null) return;
-
+    public void mazeTiles(Graphics g) {
         for (int y = 0; y < mazeGrid.length; y++) {
             for (int x = 0; x < mazeGrid[0].length; x++) {
                 if (mazeGrid[y][x]) {
@@ -120,12 +123,61 @@ public class Maze extends JPanel implements ActionListener, KeyListener {
                 } else if (x == exit.x && y == exit.y) {
                     g.setColor(Color.GREEN);
                 }
-                g.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                g.fillRect(x * drawSize, y * drawSize, drawSize, drawSize);
             }
         }
-        if (!mazeGrid[20][10]) {
-            g.setColor(Color.GREEN);
+    }
+    
+    public void playerCamera(Graphics g) {
+        int drawSize = tileSize * scaleFactor;
+        int halfCols = viewCols / 2;
+        int halfRows = viewRows / 2;
+
+        int offsetX = player.getX() - halfCols;
+        int offsetY = player.getY() - halfRows;
+
+        // clamp so camera never goes outside maze
+        if (offsetX < 0) offsetX = 0;
+        if (offsetY < 0) offsetY = 0;
+        if (offsetX + viewCols > mazeGrid[0].length) offsetX = mazeGrid[0].length - viewCols;
+        if (offsetY + viewRows > mazeGrid.length) offsetY = mazeGrid.length - viewRows;
+        for (int y = 0; y < viewRows; y++) {
+            for (int x = 0; x < viewCols; x++) {
+                int mazeX = x + offsetX;
+                int mazeY = y + offsetY;
+
+                if (mazeGrid[mazeY][mazeX]) {
+                    g.setColor(Color.BLACK);
+                } else {
+                    g.setColor(Color.WHITE);
+                }
+
+                if (start != null && mazeX == start.x && mazeY == start.y) {
+                    g.setColor(Color.RED);
+                } else if (exit != null && mazeX == exit.x && mazeY == exit.y) {
+                    g.setColor(Color.GREEN);
+                }
+
+                g.fillRect(x * drawSize, y * drawSize, drawSize, drawSize);
+            }
         }
+        int playerScreenX = (player.getX() - offsetX) * drawSize;
+        int playerScreenY = (player.getY() - offsetY) * drawSize;
+
+        g.drawImage(player.getSprite(),
+                    playerScreenX,
+                    playerScreenY,
+                    this);
+
+    }
+
+	@Override
+    public void paintComponent(Graphics g) {
+        // Drawing logic for your map goes here
+       super.paintComponent(g);
+
+        if (mazeGrid == null) return;
+        playerCamera(g);
 	}
 
 	@Override
@@ -136,6 +188,36 @@ public class Maze extends JPanel implements ActionListener, KeyListener {
 
     public void keyPressed(KeyEvent e) {
         // react to key down events
+        int newX = player.getX();
+        int newY = player.getY();
+
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_W: // W
+            case KeyEvent.VK_UP:
+                newY--;
+                break;
+            case KeyEvent.VK_S: // S
+            case KeyEvent.VK_DOWN:
+                newY++;
+                break;
+            case KeyEvent.VK_A: // A
+            case KeyEvent.VK_LEFT:
+                newX--;
+                break;
+            case KeyEvent.VK_D: // D
+            case KeyEvent.VK_RIGHT:
+                newX++;
+                break;
+        }
+
+        // Check collision
+        if (newY >= 0 && newY < mazeGrid.length &&
+            newX >= 0 && newX < mazeGrid[0].length &&
+            !mazeGrid[newY][newX]) {
+            player.setPosition(newX, newY);
+        }
+
+        repaint(); // redraw after movement
     }
 
 	@Override
